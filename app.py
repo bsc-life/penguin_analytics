@@ -9,7 +9,6 @@ data["Date"] = pd.to_datetime(data["Date"], format="%Y-%m-%d")
 data.sort_values("Date", inplace=True)
 
 app = dash.Dash(__name__)
-server = app.server
 
 app.layout = html.Div(
     children=[
