@@ -23,7 +23,7 @@ app.layout = html.Div([
         'FOXA1',
         id='dropdown'
     ),
-    html.Img(id='display-value', style={'height':'10%', 'width':'10%'})
+    html.Img(id='display-value', style={'height':'50%', 'width':'50%'})
 ])
 
 @app.callback(
