@@ -57,8 +57,10 @@ def single_promoter_graph(prot, size_factor=150, top_genes=100,
     :param 40 top_genes: number of protein binding sites or intermediate protein names to be displayed
        in each ofthe 3 categories (promoter, middle or enhancer side)
     """
-    nodes = pd.read_csv(os.path.join(dpath, f'{prot}_nodes.tsv'), sep='\t')
-    edges = pd.read_csv(os.path.join(dpath, f'{prot}_edges.tsv'), sep='\t')
+    #nodes = pd.read_csv(os.path.join(dpath, f'{prot}_nodes.tsv'), sep='\t')
+    nodes = pd.read_csv("".join([dpath,'/',prot,'_nodes.tsv']), sep='\t')
+    #edges = pd.read_csv(os.path.join(dpath, f'{prot}_edges.tsv'), sep='\t')
+    edges = pd.read_csv("".join([dpath,'/',prot,'_edges.tsv']), sep='\t')
     edges['XYs-edge'] = edges['XYs-edge'].apply(lambda x: eval(x.replace('array', '')))
     
     ##################################
