@@ -8,6 +8,8 @@ import numpy as np
 from random import random
 import pandas as pd
 
+import io
+import base64
 
 dpath = 'graph_tables'
 
@@ -203,5 +205,9 @@ def single_promoter_graph(prot, size_factor=150, top_genes=100,
     axe.spines["top"].set_visible(False)
     axe.get_xaxis().set_visible(False)
     axe.get_yaxis().set_visible(False)
-    plt.show()
-
+    #plt.show()
+    buf = io.BytesIO() # in-memory files
+    plt.savefig(buf, format = "png") # save to the above file object
+    plt.close()
+    data = base64.b64encode(buf.getbuffer()).decode("utf8") # encode to html elements
+    return "data:image/png;base64,{}".format(data)

@@ -41,13 +41,14 @@ app.layout = html.Div([
         'FOXA1',
         id='dropdown'
     ),
-    html.Div(id='display-value')
+    html.Img(id='display-value')
 ])
 
-@app.callback(Output('display-value', 'children'),
-                [Input('dropdown', 'value')])
-#def display_value(value):
-#    return f'You have selected {value}'
+@app.callback(
+	Output('display-value', 'src'),
+	[Input('dropdown', 'value')]
+)
+
 def display_value(prot):
     p = utils.single_promoter_graph({prot})
     return(p)
