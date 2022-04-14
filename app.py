@@ -50,24 +50,7 @@ app.layout = html.Div([
 #    return f'You have selected {value}'
 def display_value(prot):
     p = widgets.interact(
-    utils.single_promoter_graph(prot),
-    prot=sorted([f[:-10] for f in os.listdir(dpath) if f.endswith('_nodes.tsv')]),
-    size_factor=(1, 1000, 10),
-    # enhancer and promoter do not have all node stats (thanks Alex!!! :P)
-    DBP_size = [s for s in node_stats if not 'enrich' in s and not 'cluster' in s and not 'global' in s],
-    DBP_color = [s for s in node_stats if not 'enrich' in s and not 'cluster' in s and not 'global' in s],
-    DBP_cmap=['coolwarm', 'Greys', 'Reds', 'viridis'],
-    intermediate_size= node_stats,
-    intermediate_color= node_stats,
-    intermediate_cmap=['coolwarm', 'Greys', 'Reds', 'viridis'],
-    edge_width=edge_stats,
-    edge_color=edge_stats,
-    edge_cmap=[None, 'coolwarm', 'Greys', 'Reds', 'viridis'],
-    DBP_displayed_perc=(0,100,1),
-    int_displayed_perc=(0,100,1),
-    edge_alpha=(0, 1, 0.1),
-    SNP_path=False,
-    druggable=False,
+    utils.single_promoter_graph({prot})
     )
     return(p)
 
