@@ -49,9 +49,7 @@ app.layout = html.Div([
 #def display_value(value):
 #    return f'You have selected {value}'
 def display_value(prot):
-    p = widgets.interact(
-    utils.single_promoter_graph({prot})
-    )
+    p = utils.single_promoter_graph({prot})
     return(p)
 
 if __name__ == '__main__':
