@@ -1,10 +1,20 @@
 from dash import Dash, dcc, html, Input, Output
 import os
 
+#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+#app = Dash(__name__, external_stylesheets=external_stylesheets)
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+external_stylesheets = [
+    {
+        "href": "https://fonts.googleapis.com/css2?"
+                "family=Lato:wght@400;700&display=swap",
+        "rel": "stylesheet",
+    },
+]
 
-app = Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+app.title = "Avocado Analytics: Understand Your Avocados!"
 
 server = app.server
 
