@@ -19,11 +19,12 @@ dpath = 'graph_tables'
 prots=sorted([f[:-10] for f in os.listdir(dpath) if f.endswith('_nodes.tsv')])
 
 app.layout = html.Div([
+    html.H2('PENGUIN (Promoter-ENancher-GUided Interaction Networks)'),
     dcc.Dropdown(prots,
         'FOXA1',
         id='dropdown'
     ),
-    html.Img(id='display-value', style={'height':'50%', 'width':'50%'})
+    html.Img(id='display-value', style={'height':'65%', 'width':'65%'})
 ])
 
 @app.callback(
