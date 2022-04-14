@@ -1,4 +1,5 @@
 import os
+import re
 
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
@@ -58,9 +59,9 @@ def single_promoter_graph(prot, size_factor=150, top_genes=100,
        in each ofthe 3 categories (promoter, middle or enhancer side)
     """
     #nodes = pd.read_csv(os.path.join(dpath, f'{prot}_nodes.tsv'), sep='\t')
-    nodes = pd.read_csv("".join([dpath,'/',str(prot),'_nodes.tsv']), sep='\t')
+    nodes = pd.read_csv("".join([dpath,'/',re.sub('\W+','',str(prot)),'_nodes.tsv']), sep='\t')
     #edges = pd.read_csv(os.path.join(dpath, f'{prot}_edges.tsv'), sep='\t')
-    edges = pd.read_csv("".join([dpath,'/',str(prot),'_edges.tsv']), sep='\t')
+    edges = pd.read_csv("".join([dpath,'/',re.sub('\W+','',str(prot)),'_edges.tsv']), sep='\t')
     edges['XYs-edge'] = edges['XYs-edge'].apply(lambda x: eval(x.replace('array', '')))
     
     ##################################
