@@ -28,5 +28,9 @@
  z-index: 999;
  background: #2A3F54;
  color: #F7F7F7;
+}
 
+.Select--multi .Select-value {
+    background-color: white;
+    color: black;
 }
