@@ -1,20 +1,58 @@
-from dash import Dash, html, dcc, html, Input, Output
+
+# setup
+import dash
+from dash import Dash, html, dcc, html, Input, Output, State
+import dash_bootstrap_components as dbc
 import dash_daq as daq
 import os
 import utils
+import pandas as pd
+from settings import config
 
-app = Dash(__name__)
-server = app.server
-app.title = "PENGUIN"
+open("out.txt", 'w').close()
+
+# App Instance
+app = dash.Dash(name=config.app_name, assets_folder="src", external_stylesheets=[dbc.themes.LUX, config.fontawesome])
+app.title = config.app_name
+
+########################## Navbar ##########################
+
+navbar = dbc.Nav(className="nav nav-pills", children=[
+    ## logo/home
+    dbc.NavItem(html.Img(src=app.get_asset_url("penguin.png"), height="40px")),
+    ## about
+    dbc.NavItem(html.Div([
+        dbc.NavLink("About", href="/", id="about-popover", active=False),
+        dbc.Popover(id="about", is_open=False, target="about-popover", children=[
+            #dbc.PopoverHeader("How it works"), 
+            dbc.PopoverBody(config.about)
+        ])
+    ])),
+    ## links
+    dbc.DropdownMenu(label="Links", nav=True, children=[
+    	dbc.DropdownMenuItem([html.I(className="fa fa-github"), "  Code"], href=config.code, target="_blank"),
+        dbc.DropdownMenuItem([html.I(className="fa fa-youtube"), "  Tutorial"], href=config.contacts, target="_blank")
+    ])
+])
+
+@app.callback(output=[Output(component_id="about", component_property="is_open"), 
+                      Output(component_id="about-popover", component_property="active")], 
+              inputs=[Input(component_id="about-popover", component_property="n_clicks")], 
+              state=[State("about","is_open"), State("about-popover","active")])
+def about_popover(n, is_open, active):
+    if n:
+        return not is_open, active
+    return is_open, active
+
+
+########################## Body ##########################
 
 dpath = 'graph_tables'
 prots = sorted([f[:-10] for f in os.listdir(dpath) if f.endswith('_nodes.tsv')])
-node_stats_short = ['degree', 'expression_log2FoldChange', 'expression_padj', 'SNP-binding', 'fisher_test_OR', 'fisher_test_pval', 'Node_druggability']
-
+                               
 node_stats = [
     'degree', 
     'expression_log2FoldChange', 'expression_padj', 
-    'SNP-binding',
     'Betweenness_global', 'Degree_global', 'Betweenness_in_cluster',
     'Betweenness_out_cluster', 'Betweenness_enrichment',
     'Degree_in_cluster', 'Degree_out_cluster', 'Degree_enrichment',
@@ -22,203 +60,151 @@ node_stats = [
     'Node_druggability'
 ]
 edge_stats = [
-    'None',
+    None,
     'fisher_test_edge_OR', 
     'fisher_test_edge_pvalue',
     'SNP-path', 
     'druggable'
 ]
 
-DBP_cmap=['None', 'coolwarm', 'Greys', 'Reds', 'viridis']
+options = [s for s in node_stats if not 'enrich' in s and not 'cluster' in s and not 'global' in s]
 
-app.layout = html.Div(
-            className="content",
-            children=[
 
-                html.Div(
-                    className="left_menu",
-                    children=[
-                        html.Div(
-                            [
-                                
-                                html.Label("Promoter"),
-                                dcc.Dropdown(prots,'FOXA1',
-                                    id='promoter'
-                                    ),
+##### text display #####
 
-                                html.Label("Size factor"),
-                                dcc.Slider(0, 1000, 5,
-                                    value=150,
-                                    marks=None,
-                                    tooltip={"placement": "bottom", "always_visible": True},
-                                    id='size_factor'
-                                    ),
+text_markdown = "\t"
+with open('out.txt') as this_file:
+    for a in this_file.read():
+        if "\n" in a:
+            text_markdown += "\n \t"
+        else:
+            text_markdown += a
 
-                                html.Label("Top genes"),
-                                dcc.Slider(0, 300, 1,
-                                    value=100,
-                                    marks=None,
-                                    tooltip={"placement": "bottom", "always_visible": True},
-                                    id='top_genes'
-                                    ),
 
-                                html.Label("DBPs color"),
-                                dcc.Dropdown(node_stats_short,'fisher_test_OR',
-                                    id='DBP_color'
-                                    ),
+# Output
+body = dbc.Row([
 
-                                html.Label("DBPs size"),
-                                dcc.Dropdown(node_stats_short,'degree',
-                                    id='DBP_size'
-                                    ),
+	dbc.Col(width=2, children=[
 
-                                html.Label("Intermediates color"),
-                                dcc.Dropdown(node_stats,'fisher_test_OR',
-                                    id='intermediate_color'
-                                    ),
-                                html.Label("Intermediates size"),
-                                dcc.Dropdown(node_stats,'Betweenness_enrichment',
-                                    id='intermediate_size'
-                                    ),
+		
+			dbc.Label("Promoter"),
+		    dcc.Dropdown(prots,'MYC',
+		        id='promoter'
+		        ),
 
-                                html.Label("Edges color"),
-                                dcc.Dropdown(edge_stats,'fisher_test_edge_OR',
-                                    id='edge_color'
-                                    ),
+		    dbc.Label("DBPs size"),
+		    dcc.Dropdown(options,'fisher_test_pval',
+		        id='DBP_size'
+		        ),
 
-                                html.Label("Edges width"),
-                                dcc.Dropdown(edge_stats,'druggable',
-                                    id='edge_width'
-                                    ),
+		    dbc.Label("DBPs color"),
+		    dcc.Dropdown(options,'fisher_test_OR',
+		        id='DBP_color'
+		        ),
 
-                                html.Label("DBPs CMAP"),
-                                dcc.Dropdown(DBP_cmap,'coolwarm',
-                                    id='DBP_cmap'
-                                    ),
+		    dbc.Label("Intermediates size"),
+		    dcc.Dropdown(node_stats,'fisher_test_pval',
+		        id='intermediate_size'
+		        ),
 
-                                html.Label("Intermediates CMAP"),
-                                dcc.Dropdown(DBP_cmap,'coolwarm',
-                                    id='intermediate_cmap'
-                                    ),
+		    dbc.Label("Intermediates color"),
+		    dcc.Dropdown(node_stats,'fisher_test_OR',
+		        id='intermediate_color'
+		        ),
 
-                                html.Label("Edges CMAP"),
-                                dcc.Dropdown(DBP_cmap, 'None',
-                                    id='edge_cmap'
-                                    ),
+		    dbc.Label("DGE_tumorVSnormal_logFC_GEPIA_input"),
+		    dcc.Slider(-5, 8, 0.5,
+		        value=-5,
+		        marks=None,
+		        tooltip={"placement": "bottom", "always_visible": True},
+		        id='DGE_tumorVSnormal_logFC_GEPIA_input'
+		        ),
 
-                                html.Label("Edges alpha"),
-                                dcc.Slider(0, 1, 0.1,
-                                    value=0.5,
-                                    marks=None,
-                                    tooltip={"placement": "bottom", "always_visible": True},
-                                    id='edge_alpha'
-                                    ),
+		    dbc.Label("FPKM_input"),
+		    dcc.Slider(0, 100, 2,
+		        value=0,
+		        marks=None,
+		        tooltip={"placement": "bottom", "always_visible": True},
+		        id='FPKM_input'
+		        ),
 
-                                html.Label("Percentage of displayed promoter"),
-                                dcc.Slider(0, 100, 1,
-                                    value=75,
-                                    marks=None,
-                                    tooltip={"placement": "bottom", "always_visible": True},
-                                    id='Prom_displayed_perc'
-                                    ),
+		    dbc.Label("SNP_BindingSite_path_input"),
+		    daq.ToggleSwitch(value=True,
+		        id='SNP_BindingSite_path_input'),
 
-                                html.Label("Percentage of displayed enhancer"),
-                                dcc.Slider(0, 100, 1,
-                                    value=75,
-                                    marks=None,
-                                    tooltip={"placement": "bottom", "always_visible": True},
-                                    id='Enha_displayed_perc'
-                                    ),
+		    dbc.Label("SNP_GenLoc_path_input"),
+		    daq.ToggleSwitch(value=True,
+		        id='SNP_GenLoc_path_input'),
 
-                                html.Label("Percentage of displayed intermediates"),
-                                dcc.Slider(0, 100, 1,
-                                    value=75,
-                                    marks=None,
-                                    tooltip={"placement": "bottom", "always_visible": True},
-                                    id='int_displayed_perc'
-                                    ),
+		    dbc.Label("only_enriched_nodes_input"),
+		    daq.ToggleSwitch(value=True,
+		        id='only_enriched_nodes_input'),
 
-                                html.Label("SNP_path"),
-                                daq.ToggleSwitch(value=False,
-                                    id='SNP_path'),
+		    dbc.Label("only_enriched_edges_input"),
+		    daq.ToggleSwitch(value=True,
+		        id='only_enriched_edges_input')
 
-                                html.Label("druggable"),
-                                daq.ToggleSwitch(value=True,
-                                    id='druggable'),
+	], style={"fontSize": "10px"}),
 
-                                html.Label("paintor_SNP"),
-                                daq.ToggleSwitch(value=False,
-                                    id='paintor_SNP'),
+	dbc.Col(width=10, children=[
+			dbc.Spinner([
+				html.Img(id='display-value', style={'height':'83%', 'width':'83%'})
+			], color="primary", type="grow"),
+	])
+])
 
-                                html.Label("only_enriched_nodes"),
-                                daq.ToggleSwitch(value=False,
-                                    id='only_enriched_nodes'),
-
-                                html.Label("enriched_edges"),
-                                daq.ToggleSwitch(value=False,
-                                    id='enriched_edges'),
-
-                                html.Label("paintor_SNP_edges"),
-                                daq.ToggleSwitch(value=False,
-                                    id='paintor_SNP_edges'),
-                            ]
-                        ),
-                ]),
-
-                html.Div(
-                    className="right_content",
-                    children=[
-                        html.Div(
-                            className="top_metrics",
-                            children=[
-                                html.H2('PENGUIN (Promoter-ENancher-GUided Interaction Networks)')
-                            ]
-                        ),
-                        
-                        html.Img(id='display-value', style={'height':'65%', 'width':'65%'})
-                    
-                    ], style={'textAlign': 'center'}
-
-                )
-            ])
 
 @app.callback(
-    Output('display-value', 'src'),
-    Input('promoter', 'value'),
-    Input('size_factor', 'value'),
-    Input('top_genes', 'value'),
-    Input('DBP_color', 'value'),
-    Input('DBP_size', 'value'),
-    Input('intermediate_color', 'value'),
-    Input('intermediate_size', 'value'),
-    Input('edge_color', 'value'),
-    Input('edge_width', 'value'),
-    Input('DBP_cmap', 'value'),
-    Input('intermediate_cmap', 'value'),
-    Input('edge_cmap', 'value'),
-    Input('edge_alpha', 'value'),
-    Input('Prom_displayed_perc', 'value'),
-    Input('Enha_displayed_perc', 'value'),
-    Input('int_displayed_perc', 'value'),
-    Input('SNP_path', 'value'),
-    Input('druggable', 'value'),
-    Input('paintor_SNP', 'value'),
-    Input('only_enriched_nodes', 'value'),
-    Input('enriched_edges', 'value'),
-    Input('paintor_SNP_edges', 'value')
+	Output('display-value', 'src'),
+	Input('promoter', 'value'),
+	Input('DBP_size', 'value'),
+	Input('DBP_color', 'value'),
+	Input('intermediate_size', 'value'),
+	Input('intermediate_color', 'value'),
+	Input('DGE_tumorVSnormal_logFC_GEPIA_input', 'value'),
+	Input('FPKM_input', 'value'),
+	Input('SNP_BindingSite_path_input', 'value'),
+	Input('SNP_GenLoc_path_input', 'value'),
+	Input('only_enriched_nodes_input', 'value'),
+	Input('only_enriched_edges_input', 'value')
 )
 
-def display_value(promoter, size_factor, top_genes, DBP_color, DBP_size,
-                    intermediate_color, intermediate_size, edge_color, edge_width,
-                    DBP_cmap, intermediate_cmap, edge_cmap, edge_alpha,
-                    Prom_displayed_perc, Enha_displayed_perc, int_displayed_perc,
-                    SNP_path, druggable, paintor_SNP, only_enriched_nodes, enriched_edges, paintor_SNP_edges):
-    p = utils.single_promoter_graph(promoter, size_factor, top_genes, DBP_color, DBP_size,
-                    intermediate_color, intermediate_size, edge_color, edge_width,
-                    DBP_cmap, intermediate_cmap, edge_cmap, edge_alpha,
-                    Prom_displayed_perc, Enha_displayed_perc, int_displayed_perc,
-                    SNP_path, druggable, paintor_SNP, only_enriched_nodes, enriched_edges, paintor_SNP_edges)
+
+
+def display_value(promoter, 
+                          DBP_size, DBP_color,
+                          intermediate_size, intermediate_color,
+                          DGE_tumorVSnormal_logFC_GEPIA_input,
+                          FPKM_input,
+                          SNP_BindingSite_path_input,
+                          SNP_GenLoc_path_input,
+                          only_enriched_nodes_input,
+                          only_enriched_edges_input):
+    p = utils.single_promoter_graph(promoter, 
+                          DBP_size, DBP_color,
+                          intermediate_size, intermediate_color,
+                          DGE_tumorVSnormal_logFC_GEPIA_input,
+                          FPKM_input,
+                          SNP_BindingSite_path_input,
+                          SNP_GenLoc_path_input,
+                          only_enriched_nodes_input,
+                          only_enriched_edges_input)
     return(p)
 
-if __name__ == '__main__':
-    app.run_server(debug=True)
+
+########################## App Layout ##########################
+app.layout = dbc.Container(fluid=True, children=[
+    html.Br(),
+    html.H1(config.app_name, id="nav-pills"),
+    html.H4('Promoter-ENancher-GUided Interaction Networks'),
+    navbar,
+    html.Br(),
+    body
+])
+
+
+
+########################## Run ##########################
+if __name__ == "__main__":
+    debug = True if config.ENV == "DEV" else False
+    app.run_server(debug=debug, host=config.host, port=config.port)
