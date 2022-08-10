@@ -193,43 +193,9 @@ def single_promoter_graph(promoter,
     ##################################
     # start plotting    
     fig = plt.figure(figsize=(14, 20), facecolor='white')
-
     gs0 = gridspec.GridSpec(2, 1, figure=fig, height_ratios=[2, 1], hspace=0.1)
-    gs00 = gridspec.GridSpecFromSubplotSpec(4, 4, subplot_spec=gs0[1], hspace=0.5)
-
     axe = fig.add_subplot(gs0[0])
-    axes = [fig.add_subplot(gs00[i, j]) for i in range(4) for j in range(4)]
 
-    #################
-    # bottom histogram
-    for nstat, stat in enumerate([
-        'expression_log2FoldChange', 'expression_padj', 'fisher_test_OR', 'fisher_test_pval',
-        'Betweenness_enrichment', 'Betweenness_enrichment_pval', 'Degree_enrichment', 'Degree_enrichment_pval',
-        'Betweenness_global', 'Betweenness_in_cluster', 'Betweenness_out_cluster', 
-        'Degree_global', 'Degree_in_cluster', 'Degree_out_cluster', ]):
-        axes[nstat].hist([v for v in nodes[stat] if np.isfinite(v)], color='lightgrey', edgecolor='darkgrey')
-        annotate_axes(axes[nstat], 'Node:\n' + stat.replace('_', ' '), fontsize=10)
-        if stat in [DBP_color, DBP_size, intermediate_color, intermediate_size, edge_width, edge_color]:
-            axes[nstat].spines['bottom'].set_color('tab:red')
-            axes[nstat].spines['bottom'].set_linewidth(3)
-            axes[nstat].spines['top'].set_color('tab:red') 
-            axes[nstat].spines['top'].set_linewidth(3)
-            axes[nstat].spines['right'].set_color('tab:red')
-            axes[nstat].spines['right'].set_linewidth(3)
-            axes[nstat].spines['left'].set_color('tab:red')
-            axes[nstat].spines['left'].set_linewidth(3)
-    for nstat, stat in enumerate(['fisher_test_edge_OR', 'fisher_test_edge_pvalue'], nstat + 1):
-        axes[nstat].hist([v for v in edges[stat] if np.isfinite(v)], color='lightgrey', edgecolor='darkred')
-        annotate_axes(axes[nstat], 'Edge:\n' + stat.replace('_', ' '), fontsize=10)
-        if stat in [DBP_color, DBP_size, intermediate_color, intermediate_size, edge_width, edge_color]:
-            axes[nstat].spines['bottom'].set_color('tab:red')
-            axes[nstat].spines['bottom'].set_linewidth(3)
-            axes[nstat].spines['top'].set_color('tab:red') 
-            axes[nstat].spines['top'].set_linewidth(3)
-            axes[nstat].spines['right'].set_color('tab:red')
-            axes[nstat].spines['right'].set_linewidth(3)
-            axes[nstat].spines['left'].set_color('tab:red')
-            axes[nstat].spines['left'].set_linewidth(3)
     #################
     verbatim.append(["Number of edges: ", edges.shape[0]])
     # X limits
@@ -285,7 +251,8 @@ def single_promoter_graph(promoter,
 
         if SNP_BindingSite_path_input:
             sub_nodes["protein_SNP"] = np.where(
-                sub_nodes["SNP-binding"] != False,  sub_nodes["protein_display_name"].map(str) + "-\n" + sub_nodes["SNP-binding"].map(str)  , sub_nodes["protein_display_name"] ) 
+                #sub_nodes["SNP-binding"] != False,  sub_nodes["protein_display_name"].map(str) + "-\n" + sub_nodes["SNP-binding"].map(str)  , sub_nodes["protein_display_name"] ) 
+                sub_nodes["SNP-binding"].astype(str).str.startswith('rs'), sub_nodes["protein_display_name"].map(str) + "-\n" + sub_nodes["SNP-binding"].map(str), sub_nodes["protein_display_name"]) 
 
             wanted_enhancers = sub_nodes[['protein_SNP', 'X-graph-coord', 'Y-graph-coord','in_22']].to_numpy()
         else:
@@ -467,8 +434,10 @@ def single_promoter_graph(promoter,
     plt.close()
     data = base64.b64encode(buf.getbuffer()).decode("utf8") # encode to html elements
     
-    with open("out.txt", "w") as f:
+    with open("outfiles/network_stats.txt", "w") as f:
         wr = csv.writer(f, delimiter =' ')
         wr.writerows(verbatim)
+
+    edges.to_csv("outfiles/network.tsv",sep='\t',header=True, index=False)
 
     return "data:image/png;base64,{}".format(data)

@@ -9,8 +9,6 @@ import utils
 import pandas as pd
 from settings import config
 
-open("out.txt", 'w').close()
-
 # App Instance
 app = dash.Dash(name=config.app_name, assets_folder="src", external_stylesheets=[dbc.themes.LUX, config.fontawesome])
 app.title = config.app_name
@@ -32,7 +30,7 @@ navbar = dbc.Nav(className="nav nav-pills", children=[
     ## links
     dbc.DropdownMenu(label="Links", nav=True, children=[
     	dbc.DropdownMenuItem([html.I(className="fa fa-github"), "  Code"], href=config.code, target="_blank"),
-        dbc.DropdownMenuItem([html.I(className="fa fa-youtube"), "  Tutorial"], href=config.contacts, target="_blank")
+        dbc.DropdownMenuItem([html.I(className="fa fa-file-text-o"), "  Tutorial"], href=config.tutorial, target="_blank")
     ])
 ])
 
@@ -70,18 +68,6 @@ edge_stats = [
 
 options = [s for s in node_stats if not 'enrich' in s and not 'cluster' in s and not 'global' in s]
 
-
-##### text display #####
-
-text_markdown = "\t"
-with open('out.txt') as this_file:
-    for a in this_file.read():
-        if "\n" in a:
-            text_markdown += "\n \t"
-        else:
-            text_markdown += a
-
-
 # Output
 body = dbc.Row([
 
@@ -93,27 +79,29 @@ body = dbc.Row([
 		        id='promoter'
 		        ),
 
-		    dbc.Label("DBPs size"),
+		    dbc.Label("DBPs displayed size"),
 		    dcc.Dropdown(options,'fisher_test_pval',
 		        id='DBP_size'
 		        ),
 
-		    dbc.Label("DBPs color"),
+		    dbc.Label("DBPs displayed color"),
 		    dcc.Dropdown(options,'fisher_test_OR',
 		        id='DBP_color'
 		        ),
 
-		    dbc.Label("Intermediates size"),
+		    dbc.Label("Intermediates displayed size"),
 		    dcc.Dropdown(node_stats,'fisher_test_pval',
 		        id='intermediate_size'
 		        ),
 
-		    dbc.Label("Intermediates color"),
+		    dbc.Label("Intermediates displayed color"),
 		    dcc.Dropdown(node_stats,'fisher_test_OR',
 		        id='intermediate_color'
 		        ),
-
-		    dbc.Label("DGE_tumorVSnormal_logFC_GEPIA_input"),
+		    
+		    html.Br(),
+		    
+		    dbc.Label("Differential expression cutoff (GEPIA) [log2FC]"),
 		    dcc.Slider(-5, 8, 0.5,
 		        value=-5,
 		        marks=None,
@@ -121,27 +109,29 @@ body = dbc.Row([
 		        id='DGE_tumorVSnormal_logFC_GEPIA_input'
 		        ),
 
-		    dbc.Label("FPKM_input"),
+		    dbc.Label("Differential expression cutoff (LNCaP/LHSAR) [FPKM]"),
 		    dcc.Slider(0, 100, 2,
 		        value=0,
 		        marks=None,
 		        tooltip={"placement": "bottom", "always_visible": True},
 		        id='FPKM_input'
 		        ),
-
-		    dbc.Label("SNP_BindingSite_path_input"),
+            
+		    html.Br(),
+		    
+		    dbc.Label("SNP paths (PrCa SNPs in enhancer binding motifs)"),
 		    daq.ToggleSwitch(value=True,
 		        id='SNP_BindingSite_path_input'),
 
-		    dbc.Label("SNP_GenLoc_path_input"),
+		    dbc.Label("SNP paths (PrCa SNPs in intermediate proteins)"),
 		    daq.ToggleSwitch(value=True,
 		        id='SNP_GenLoc_path_input'),
 
-		    dbc.Label("only_enriched_nodes_input"),
+		    dbc.Label("Nodes enriched in cluster GWAS+"),
 		    daq.ToggleSwitch(value=True,
 		        id='only_enriched_nodes_input'),
 
-		    dbc.Label("only_enriched_edges_input"),
+		    dbc.Label("Edges enriched in cluster GWAS+"),
 		    daq.ToggleSwitch(value=True,
 		        id='only_enriched_edges_input')
 
@@ -169,9 +159,6 @@ body = dbc.Row([
 	Input('only_enriched_nodes_input', 'value'),
 	Input('only_enriched_edges_input', 'value')
 )
-
-
-
 def display_value(promoter, 
                           DBP_size, DBP_color,
                           intermediate_size, intermediate_color,
@@ -192,6 +179,15 @@ def display_value(promoter,
                           only_enriched_edges_input)
     return(p)
 
+@app.callback(
+    Output("download_network_tsv", "data"),
+    Input("network_tsv", "n_clicks"),
+    prevent_initial_call=True
+)
+def func(n_clicks):
+    return dcc.send_file(
+        "outfiles/network.tsv"
+    )
 
 ########################## App Layout ##########################
 app.layout = dbc.Container(fluid=True, children=[
@@ -199,6 +195,12 @@ app.layout = dbc.Container(fluid=True, children=[
     html.H1(config.app_name, id="nav-pills"),
     html.H4('Promoter-ENancher-GUided Interaction Networks'),
     navbar,
+    html.Br(),
+    html.Div(
+    [
+        html.Button("Download the network", id="network_tsv"),
+        dcc.Download(id="download_network_tsv"),
+    ]),
     html.Br(),
     body
 ])
