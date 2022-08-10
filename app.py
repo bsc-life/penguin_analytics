@@ -30,7 +30,8 @@ navbar = dbc.Nav(className="nav nav-pills", children=[
     ## links
     dbc.DropdownMenu(label="Links", nav=True, children=[
     	dbc.DropdownMenuItem([html.I(className="fa fa-github"), "  Code"], href=config.code, target="_blank"),
-        dbc.DropdownMenuItem([html.I(className="fa fa-file-text-o"), "  Tutorial"], href=app.get_asset_url("documentation.html"), target="_blank")
+        #dbc.DropdownMenuItem([html.I(className="fa fa-file-text-o"), "  Tutorial"], href=app.get_asset_url("documentation.html"), target="_blank")
+        dbc.DropdownMenuItem(html.A("  Tutorial",className="fa fa-file-text-o",href=app.get_asset_url("documentation.html"), target="_blank"))
     ])
 ])
 
