@@ -110,7 +110,7 @@ body = dbc.Row([
 		        id='DGE_tumorVSnormal_logFC_GEPIA_input'
 		        ),
 
-		    dbc.Label("Differential expression cutoff (LNCaP/LHSAR) [FPKM]"),
+		    dbc.Label("Expression cutoff (LNCaP) [FPKM]"),
 		    dcc.Slider(0, 100, 2,
 		        value=0,
 		        marks=None,
@@ -203,7 +203,10 @@ app.layout = dbc.Container(fluid=True, children=[
         dcc.Download(id="download_network_tsv"),
     ]),
     html.Br(),
-    body
+    body,
+    html.Br(),
+    html.Br(),
+    html.Br()
 ])
 
 
