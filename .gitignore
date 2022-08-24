@@ -2,4 +2,4 @@ venv
 *.pyc
 .DS_Store
 .env
-graph_tables_cluster8.tar.gz
+./graph_tables_cluster8.tar.gz
