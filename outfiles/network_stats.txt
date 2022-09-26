@@ -1,4 +1,0 @@
-"Number of edges: " 66
-"Number of Promoter Binders: " 8
-"Number of Enhancer Binders: " 26
-"Number of Intermediate nodes: " 19
