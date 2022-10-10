@@ -13,22 +13,24 @@ import io
 import base64
 import csv
 
-dpath = 'graph_tables'
+setupBaseDir = os.path.dirname(__file__)
 
-expression_gepia  = pd.read_csv("src/gepia2_logFC1_0.01_PRAD_degenes.txt", sep='\t')[["Gene Symbol", "Log2(Fold Change)", "adjp"]]
+dpath = os.path.join(setupBaseDir,'graph_tables')
+
+expression_gepia  = pd.read_csv(os.path.join(setupBaseDir,"src/gepia2_logFC1_0.01_PRAD_degenes.txt"), sep='\t')[["Gene Symbol", "Log2(Fold Change)", "adjp"]]
 expression_gepia.columns = [ 'Gepia_' + str(col) for col in expression_gepia.columns]
 
-expression_FPKM  = pd.read_csv("src/Cuff_Gene_Counts.txt", sep='\t')
+expression_FPKM  = pd.read_csv(os.path.join(setupBaseDir,"src/Cuff_Gene_Counts.txt"), sep='\t')
 expression_FPKM.columns = [ 'FPKM_' + str(col) for col in expression_FPKM.columns]
 
-expression_lhsar_lncap  = pd.read_csv("src/DESeq_LNCaP_LHSAR.txt", sep=' ')
+expression_lhsar_lncap  = pd.read_csv(os.path.join(setupBaseDir,"src/DESeq_LNCaP_LHSAR.txt"), sep=' ')
 expression_lhsar_lncap = expression_lhsar_lncap[["Gene.name","log2FoldChange", "padj"]]
 expression_lhsar_lncap.columns = [ 'LNCAP_LHSAR_' + str(col) for col in expression_lhsar_lncap.columns]
 
 
 
-node_druggability  = pd.read_csv("src/node_druggability.txt", sep='\t')
-paintor_snp_in_gene = pd.read_csv("src/nodes_with_paintorSNP.txt", sep='\t')
+node_druggability  = pd.read_csv(os.path.join(setupBaseDir,"src/node_druggability.txt"), sep='\t')
+paintor_snp_in_gene = pd.read_csv(os.path.join(setupBaseDir,"src/nodes_with_paintorSNP.txt"), sep='\t')
 paintor_snp_in_gene = paintor_snp_in_gene.groupby("protein").agg(
     n_rsid = pd.NamedAgg(column="rsid", aggfunc="nunique"))
 

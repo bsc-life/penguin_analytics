@@ -11,12 +11,15 @@ from dash_extensions import Download
 from dash_extensions.snippets import send_bytes
 
 import os
+import sys
+setupBaseDir = os.path.dirname(__file__)
+sys.path.insert(0, setupBaseDir)
 import utils
 import pandas as pd
 from settings import config
 
 # App Instance
-app = dash.Dash(name=config.app_name, assets_folder="src", external_stylesheets=[dbc.themes.LUX, config.fontawesome])
+app = dash.Dash(name=config.app_name, assets_folder=os.path.join(setupBaseDir, "src"), external_stylesheets=[dbc.themes.LUX, config.fontawesome])
 app.title = config.app_name
 server = app.server
 
@@ -53,7 +56,7 @@ def about_popover(n, is_open, active):
 
 ########################## Body ##########################
 
-dpath = 'graph_tables'
+dpath = os.path.join(setupBaseDir,'graph_tables')
 prots = sorted([f[:-10] for f in os.listdir(dpath) if f.endswith('_nodes.tsv')])
 #prots.append('Select a promoter Gene...')
 
@@ -363,6 +366,10 @@ app.layout = dbc.Container(fluid=True, children=[
 
 
 ########################## Run ##########################
+
 if __name__ == "__main__":
     debug = True if config.ENV == "DEV" else False
     app.run_server(debug=debug, host=config.host, port=config.port)
+
+#debug = True if config.ENV == "DEV" else False
+#app.run_server(debug=debug, host=config.host, port=config.port)
