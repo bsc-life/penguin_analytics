@@ -158,19 +158,19 @@ body = dbc.Row([
 		    html.Br(),
 		    
 		    dbc.Label("SNP paths (PrCa SNPs in enhancer binding motifs)"),
-		    daq.ToggleSwitch(value=False,
+		    daq.ToggleSwitch(value=True,
 		        id='SNP_BindingSite_path_input'),
 
 		    dbc.Label("SNP paths (PrCa SNPs in intermediate proteins)"),
-		    daq.ToggleSwitch(value=False,
+		    daq.ToggleSwitch(value=True,
 		        id='SNP_GenLoc_path_input'),
 
 		    dbc.Label("Nodes enriched in cluster GWAS+"),
-		    daq.ToggleSwitch(value=False,
+		    daq.ToggleSwitch(value=True,
 		        id='only_enriched_nodes_input'),
 
 		    dbc.Label("Edges enriched in cluster GWAS+"),
-		    daq.ToggleSwitch(value=False,
+		    daq.ToggleSwitch(value=True,
 		        id='only_enriched_edges_input')
 
             
