@@ -18,7 +18,7 @@
 <h2 style="color: #2e6c80;">Input field</h2>
 <p>The input field is placed on the left-hand side of the page and consists of a series of selectors. The <strong style="color: #5e9ca0;">Promoter</strong> selector is a dropdown menu that allows selecting the promoter for which the corresponding EPIN is displayed in the output field.</p>
 <p style="text-align:center;"><img src="doc_images/doc_02.png?rawfile=true" class="center"/><br /></p>
-<p>To better highlight the different elements of such network, additional selectors are available. The <strong style="color: #5e9ca0;">DBPs displayed size</strong> and the <strong style="color: #5e9ca0;">DBPs displayed color</strong> selectors are dropdown menus that allow changing size and color of the nodes corresponsing to <strong>DNA-binding proteins (DBPs)</strong>, i.e. the circles that are displayed vertically on the left (indicated as "Promoter" side) and on the right (indicated as "Enhancer" side) of the output image. The visualization methods that can be chosen are:</p>
+<p>To better highlight the different elements of such network, additional selectors are available. The <strong style="color: #5e9ca0;">DBPs displayed size</strong> and the <strong style="color: #5e9ca0;">DBPs displayed color</strong> selectors are dropdown menus that allow changing size and color of the nodes corresponsing to <strong>DNA-binding proteins (DBPs)</strong>, i.e. the circles that are displayed vertically on the left (indicated as "Promoter" side) and on the right (indicated as "Enhancer(s)" side) of the output image. The visualization methods that can be chosen are:</p>
 
 <li style="clear: both;"><span style="color: #5e9ca0;">degree</span>: visualization based on the number of edges that are incident to a node</li>
 <li style="clear: both;"><span style="color: #5e9ca0;">expression_log2FoldChange</span>: visualization based on log2FC values of the differential expression analysis of prostate tumor vs normal from <a href="http://gepia.cancer-pku.cn/">GEPIA</a></li>
@@ -29,16 +29,16 @@
 
 <p>The <strong style="color: #5e9ca0;">Intermediates displayed size</strong> and the <strong style="color: #5e9ca0;">Intermediates displayed color</strong> selectors are dropdown menus that allow changing size and color of the nodes corresponsing to <strong>intermediate proteins</strong>, i.e. the circles that are displayed in the center of the output image between the "Promoter" side and the "Enhancer" side. The additional visualization methods that can be chosen are:</p>
 
-<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_global</span>: visualization based on </li>
-<li style="clear: both;"><span style="color: #5e9ca0;">Degree_global</span>: visualization based on </li>
-<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_in_cluster</span>: visualization based on </li>
-<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_out_cluster</span>: visualization based on </li>
-<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_enrichment</span>: visualization based on </li>
-<li style="clear: both;"><span style="color: #5e9ca0;">Degree_in_cluster</span>: visualization based on </li>
-<li style="clear: both;"><span style="color: #5e9ca0;">Degree_out_cluster</span>: visualization based on </li>
-<li style="clear: both;"><span style="color: #5e9ca0;">Degree_enrichment</span>: visualization based on </li>
-<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_enrichment_pval</span>: visualization based on </li>
-<li style="clear: both;"><span style="color: #5e9ca0;">Degree_enrichment_pval</span>: visualization based on </li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_global</span>: visualization based on global betweenness centrality</li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Degree_global</span>: visualization based on global degree</li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_in_cluster</span>: visualization based on in-cluster betweenness centrality</li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_out_cluster</span>: visualization based on out-cluster betweenness centrality</li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_enrichment</span>: visualization based on global betweenness centrality enrichment</li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Degree_in_cluster</span>: visualization based on in-cluster degree</li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Degree_out_cluster</span>: visualization based on out-cluster degree</li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Degree_enrichment</span>: visualization based on global degree enrichment</li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Betweenness_enrichment_pval</span>: visualization based on significance of global betweenness enrichment (Fisher's exact test)</li>
+<li style="clear: both;"><span style="color: #5e9ca0;">Degree_enrichment_pval</span>: visualization based on significance of global degree enrichment (Fisher's exact test)</li>
 
 <p>Two sliders, called <strong style="color: #5e9ca0;">Differential expression cutoff (GEPIA) [log2FC]</strong> and <strong style="color: #5e9ca0;">Expression cutoff (LNCaP) [FPKM]</strong>, enable to drop nodes based on <strong>gene expression cutoffs</strong> that use log2FC values of the differential expression analysis of prostate tumor vs normal from <a href="http://gepia.cancer-pku.cn/">GEPIA</a> and FPKM values of LNCaP, respectively</p>
 
