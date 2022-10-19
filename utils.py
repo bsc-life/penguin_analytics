@@ -561,7 +561,7 @@ def single_promoter_graph(
 
         # decorate plot
         axe.text(xprom - 0.03, 1.15, 'Promoter', size=14, ha='center')
-        axe.text(xenha + 0.03, 1.15, 'Enhancer', size=14, ha='center')
+        axe.text(xenha + 0.03, 1.15, 'Enhancer(s)', size=14, ha='center')
         axe.text(0, 1.15, 'Intermediate', size=14, ha='center')
         axe.set_xlim(xprom - 0.2, xenha + 0.2)
         axe.set_ylim(-1.2, 1.2)
