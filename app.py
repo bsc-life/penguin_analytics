@@ -341,7 +341,7 @@ def display_value(
 app.layout = dbc.Container(fluid=True, children=[
     html.Br(),
     html.H1(config.app_name, id="nav-pills"),
-    html.H4('Promoter-ENancher-GUided Interaction Networks'),
+    html.H4('Promoter-ENhancer-GUided Interaction Networks'),
     navbar,
     html.Br(),
     html.Div(
