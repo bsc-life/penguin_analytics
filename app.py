@@ -226,7 +226,7 @@ def show_hide_element(visibility_state):
     prevent_initial_call=True
 )
 def func(n_clicks,promoter):
-    downloadfile = f"outfiles/{promoter}_network.tsv"
+    downloadfile = os.path.join(setupBaseDir,f"outfiles/{promoter}_network.tsv")
     if os.path.exists(downloadfile):
         return dcc.send_file(downloadfile)
     else:    
