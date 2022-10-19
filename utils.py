@@ -583,11 +583,11 @@ def single_promoter_graph(
 
 
         
-        with open("outfiles/network_stats.txt", "w") as f:
+        with open(os.path.join(setupBaseDir,"outfiles/network_stats.txt"), "w") as f:
             wr = csv.writer(f, delimiter =' ')
             wr.writerows(verbatim)
 
-        downloadable.to_csv(f"outfiles/{prot}_network.tsv",sep='\t',header=True, index=False)
+        downloadable.to_csv(os.path.join(setupBaseDir,f"outfiles/{prot}_network.tsv"),sep='\t',header=True, index=False)
         #downloadable.to_csv("outfiles/network.tsv",sep='\t',header=True, index=False)
         #button for all merged data
         # html_buttons = '''<html>
