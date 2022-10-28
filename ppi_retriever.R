@@ -14,21 +14,14 @@ output_folder = paste0("outputs_", cell_line, "_EPINS")
 dir.create(output_folder,  showWarnings = FALSE)
 dir.create(file.path(output_folder, "tables"),  showWarnings = FALSE)
 dir.create(file.path(output_folder, "tables", ppi_filter),  showWarnings = FALSE)
-
-#create output folders
-for(subDir in c("EP_graph_edges", "TF_tables", "Intermediate_nodes_tables", "Promoter_genes_tables"))
-{
-  dir.create(file.path(output_folder, "tables", ppi_filter ,subDir), showWarnings = FALSE)
-}
-
+dir.create(file.path(output_folder, "tables", ppi_filter ,"EP_graph_edges"), showWarnings = FALSE)
 
 
 ## variables
 FPKM_threshold = 0.003 # both replicates to be above
 sliding_window = 100  # sliding window for filtering fimo
 FIMO_pvalue = 1e-4
-max_num_edges = 2 # mux number of edges linking E to P in the PPI reconstruction
-
+number_intermediate_nodes = 1
 
 
 #####
@@ -95,7 +88,7 @@ chipseq_CTCF <- as.data.frame(read.table(file.path(data_folder, "CTCF_lncap_ENCF
 
 
 
-make_graph_per_gene <- function(loop, max_num_edges, save_me = 1)
+make_graph_per_gene <- function(loop, number_intermediate_nodes)
 {
   ptm=proc.time()
   my_gene <- unique(loop$promoter_gene)
@@ -139,18 +132,11 @@ make_graph_per_gene <- function(loop, max_num_edges, save_me = 1)
   if(dim(p_dbp_current)[1] == 0){return(data.frame())}
   p_dbp <- rbind(p_dbp, p_dbp_current)
   
-  CTCF_ChipSeq_P = ifelse(dim(p_fimo %>% filter(!is.na(Chipseq_CTCF)))[1] > 0, 1 , 0)
-  CTCF_P <- ifelse("CTCF" %in% p_fimo$motif_alt_id, 1 , 0)
-  
-  
   if(dim(p_fimo)[1] == 0){return(data.frame())}
   
-  snp_in_P = data.frame(SNP_in_P = dim(p_fimo %>% filter( SNP_in_Motif == 1 ) %>% distinct(motif_alt_id, rsid) %>% mutate(anchor = "P"))[1])
+  
   
   ##### ENHANCER(S)
-  e_with_ctcf <- c()
-  e_with_ctcf_chipseq <- c()
-
   
   for(enhancer in unique(my_enhancers$enhancer_anchor_id))
   {
@@ -169,18 +155,9 @@ make_graph_per_gene <- function(loop, max_num_edges, save_me = 1)
     if(dim(e_dbp_current)[1] == 0){next}
     e_dbp <- rbind(e_dbp, e_dbp_current)
     
-    CTCF_ChipSeq_E = ifelse(dim(e_fimo %>% filter(!is.na(Chipseq_CTCF)))[1] > 0, 1 , 0)
-    CTCF_E <- ifelse("CTCF" %in% e_fimo$motif_alt_id, 1 , 0)
- 
-       ##
-    if("CTCF" %in% e_fimo$motif_alt_id){
-      e_with_ctcf <- c(e_with_ctcf, enhancer)}
-    if(CTCF_ChipSeq_E > 0){
-      e_with_ctcf_chipseq <- c(e_with_ctcf_chipseq, enhancer)}
-    
     ppi_sp <- c()
     for(i in p_dbp_current$TF){ppi_sp <- c(ppi_sp, all_shortest_paths(ppi_net, from=i, to=as.character(e_dbp_current$TF))$res)}
-    ppi_sp <- ppi_sp[lapply(ppi_sp, length) <= max_num_edges ]
+    ppi_sp <- ppi_sp[lapply(ppi_sp, length) <= number_intermediate_nodes + 2 ]
     
     if(length(ppi_sp)  > 0 )
     {
@@ -227,13 +204,13 @@ make_graph_per_gene <- function(loop, max_num_edges, save_me = 1)
 
 
 
-for(gene in unique(loops$promoter_gene))
-{
-  print(gene)
-  loop <- loops %>% filter(promoter_gene == gene)
-  make_graph_per_gene(loop, max_num_edges)
-}
-
-
+# for(gene in unique(loops$promoter_gene))
+# {
+#   print(gene)
+#   loop <- loops %>% filter(promoter_gene == gene)
+#   make_graph_per_gene(loop, number_intermediate_nodes)
+# }
+loop <- loops %>% filter(promoter_gene == "MYC")
+make_graph_per_gene(loop, number_intermediate_nodes)
 
 

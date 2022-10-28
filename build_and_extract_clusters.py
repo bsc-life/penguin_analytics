@@ -49,7 +49,7 @@ cell_line = "LNCaP"
 cell_type_data_path = os.path.join(data_path, cell_line)
 data_type = 'all-nodes' # *all-nodes* (or linker-nodes or bound-nodes)
 metric    = 'overlap' # overlap or jaccard
-
+#metric    = 'jaccard' # overlap or jaccard
 
 
 #tf_path = os.path.join(data_path, 'LNCaP/ChIP-seq/')
@@ -73,13 +73,13 @@ paintor = "unfiltered_paintor"
 
 #####
 
-net_path = os.path.join(f'{cell_line}_EPINS', "tables" ,type_filtered , 'EP_graph_edges')
+net_path = os.path.join(f'outputs_{cell_line}_EPINS', "tables" ,type_filtered , 'EP_graph_edges')
 print("net_path: ",net_path)
 
 result_path = os.path.join(f'outputs_{cell_line}_EPINS', "tables" ,type_filtered , "cluster_results")
 if not os.path.exists(result_path):
     os.makedirs(result_path)
-    os.makedirs(os.path.join(result_path, "pickles"))
+    
 
 print("result_path: ",result_path)
 
@@ -185,7 +185,7 @@ def best_cut(Y, sons=None, method='CH', max_clusters=100):
         if len(set(labels)) >= size * 0.5:
             continue
         results.append((method(Y, labels), c))
-    cut = max(results)[1]
+    cut = max(results)[1] if len(results) > 0 else 0
     return cut
 
 def myresample(m, size):
@@ -361,7 +361,7 @@ for feature in features:
                     sep='\t', names=['Chromosome', 'Start', 'End'], usecols=[0, 1, 2, ])
     tmp_feature_coordinates['Chromosome'] = tmp_feature_coordinates['Chromosome'].replace(
         dict((i, i[3:]) for i in set(tmp_feature_coordinates['Chromosome'])))
-    promoter_coordinates = pd.read_csv(os.path.join(data_path, "promoters/genepos.txt"),
+    promoter_coordinates = pd.read_csv(os.path.join(cell_type_data_path, "genepos.txt"),
                 sep='\t', names=["Chromosome", "Start", "End", "promoter"], usecols=[0,1,2,3],
             skiprows=0)
     promoter_coordinates = promoter_coordinates.drop_duplicates()
@@ -381,103 +381,69 @@ for feature in features:
 #edges_by_metaloop = {}
 feature_loop = {}
 all_edges = {}
-edges_by_metaloop_exists = 0
 
 try:
     for enum_feature , feature in enumerate(features):
         print(feature)
 
         metaloop_features = {}
-        #edges_by_metaloop = {}
-
-        if feature == "CTCF":
-            pickle_file = ctcf_file
-        else:
-            pickle_file = feature
-
-        
-        pickle_path = [os.path.join(result_path, f'pickles/{pickle_file}.metaloop_features.pickle'),
-            os.path.join(result_path, f'pickles/edges_by_metaloop.pickle')]
-        
-
-        foo = 0
-        try:
-            metaloop_features[feature] = pickle.load(open(pickle_path[0], "rb"))
-            print(feature, ": pickle Exists")
-            foo +=1
-        except:
-            pass
-        
-        if enum_feature == 0:
-            try:
-                edges_by_metaloop = pickle.load(open(pickle_path[1], "rb"))
-                edges_by_metaloop_exists = 1
-            except:
-                pass
+       
             
-        foo += edges_by_metaloop_exists
+        if data_type == 'all-nodes':  # this is the good one
+            filter_pairs = lambda pairs: False
+            update_pairs = lambda pairs, vals: pairs.append(tuple(sorted(vals)))
+        elif data_type == 'linker-nodes':
+            filter_pairs = lambda pairs: any(p[:5] in ['ENHA_', 'PROM_'] for p in pairs)
+            update_pairs = lambda pairs, vals: pairs.append(tuple(sorted(vals)))
+        elif data_type == 'bound-nodes':  # in this case dear reader we only add one single protein
+            filter_pairs = lambda pairs: not all(p[:5] in ['ENHA_', 'PROM_'] for p in pairs)
+            update_pairs = lambda pairs, vals: pairs.extend(vals)
 
-        if foo != 2 : 
-            if data_type == 'all-nodes':  # this is the good one
-                filter_pairs = lambda pairs: False
-                update_pairs = lambda pairs, vals: pairs.append(tuple(sorted(vals)))
-            elif data_type == 'linker-nodes':
-                filter_pairs = lambda pairs: any(p[:5] in ['ENHA_', 'PROM_'] for p in pairs)
-                update_pairs = lambda pairs, vals: pairs.append(tuple(sorted(vals)))
-            elif data_type == 'bound-nodes':  # in this case dear reader we only add one single protein
-                filter_pairs = lambda pairs: not all(p[:5] in ['ENHA_', 'PROM_'] for p in pairs)
-                update_pairs = lambda pairs, vals: pairs.extend(vals)
+        metaloop_features[feature] = {}
+        
+        edges_by_metaloop = {}
+        for fnam in os.listdir(net_path):
+            if not len(metaloop_features[feature]) % 1000:
+                print(' ', len(metaloop_features[feature]))
+            metaloop = fnam[:-4]
+            chromosomes = []
+            starts = []
+            ends = []
+            pairs = []
+            # check if metaloop promoter is near feature
+            prom_feature = int(metaloop in feature_promoters[feature])
+            for line in open(os.path.join(net_path, fnam)):
+                prot1, prot2 = this_prot1, this_prot2 = line.strip().split("\t")
+                if prot1.startswith('ENHA_'):
+                    _, c, b, e, p = prot1.split('_', 4)
+                    chromosomes.append(c)
+                    starts.append(int(b))
+                    ends.append(int(e))
+                    this_prot1 = f'ENHA_{p}'
+                if prot2.startswith('ENHA_'):
+                    _, c, b, e, p = prot2.split('_', 4)
 
-            metaloop_features[feature] = {}
-            if edges_by_metaloop_exists == 0:
-                edges_by_metaloop = {}
-            for fnam in os.listdir(net_path):
-                if not len(metaloop_features[feature]) % 1000:
-                    print(' ', len(metaloop_features[feature]))
-                metaloop = fnam[:-4]
-                chromosomes = []
-                starts = []
-                ends = []
-                pairs = []
-                # check if metaloop promoter is near feature
-                prom_feature = int(metaloop in feature_promoters[feature])
-                for line in open(os.path.join(net_path, fnam)):
-                    prot1, prot2 = this_prot1, this_prot2 = line.strip().split("\t")
-                    if prot1.startswith('ENHA_'):
-                        _, c, b, e, p = prot1.split('_', 4)
-                        chromosomes.append(c)
-                        starts.append(int(b))
-                        ends.append(int(e))
-                        this_prot1 = f'ENHA_{p}'
-                    if prot2.startswith('ENHA_'):
-                        _, c, b, e, p = prot2.split('_', 4)
-
-                        chromosomes.append(c)
-                        starts.append(int(b))
-                        ends.append(int(e))
-                        this_prot2 = f'ENHA_{p}'
-                    if filter_pairs([prot1, prot2]):  # never go there when all-nodes
-                        continue
-                   
-                    update_pairs(pairs, [this_prot1, this_prot2])
-                tmp = pr.PyRanges(chromosomes=chromosomes, starts=starts, ends=ends)
-                tmp = tmp.drop_duplicate_positions()
-                tmp = tmp.nearest(feature_coordinates[feature])
-                if len(tmp) > 0:
-                    maxgap = 1 if feature != "CTCF" else 10000
-                    enha_feature = sum(tmp.Distance < maxgap)
-                    metaloop_features[feature][metaloop] = {'promoter': prom_feature, 'enhancer': enha_feature}
+                    chromosomes.append(c)
+                    starts.append(int(b))
+                    ends.append(int(e))
+                    this_prot2 = f'ENHA_{p}'
+                if filter_pairs([prot1, prot2]):  # never go there when all-nodes
+                    continue
                 
-                #save only if it is not available
-                if edges_by_metaloop_exists == 0:
-                    edges_by_metaloop[metaloop] = set(pairs)
-
-            pickle.dump(metaloop_features[feature], open(pickle_path[0], "wb"))
+                update_pairs(pairs, [this_prot1, this_prot2])
+            tmp = pr.PyRanges(chromosomes=chromosomes, starts=starts, ends=ends)
+            tmp = tmp.drop_duplicate_positions()
+            tmp = tmp.nearest(feature_coordinates[feature])
+            if len(tmp) > 0:
+                maxgap = 1 if feature != "CTCF" else 10000
+                enha_feature = sum(tmp.Distance < maxgap)
+                metaloop_features[feature][metaloop] = {'promoter': prom_feature, 'enhancer': enha_feature}
             
             #save only if it is not available
-            if edges_by_metaloop_exists == 0:
-                pickle.dump(edges_by_metaloop, open(pickle_path[1], "wb"))
-                edges_by_metaloop_exists = 1
+            
+            edges_by_metaloop[metaloop] = set(pairs)
+
+        
 
 
         #for feature in features:
@@ -502,7 +468,7 @@ try:
 
         all_edges[feature] = set(k for metaloop in edges_by_metaloop
                                 for k in edges_by_metaloop[metaloop])
-        
+        #print(f'len all_edges[{feature}]: ', len(all_edges[feature]))
         metaloop_features = None
         n_gc = gc.collect()
 except Exception as e:
@@ -516,46 +482,29 @@ for metaloop in edges_by_metaloop:
     if len(edges_by_metaloop[metaloop]) > 0 :
         data[metaloop] = int(''.join(str(int(n in this_loop)) for n in all_edges[feature]), 2)
 
-
+        #print(f'data[{metaloop}]: ', data[metaloop])
 metaloops = list(data.keys())
 
-distance_pickle_path = os.path.join(result_path, f'pickles/{metric}_distances.pickle')
-
-try:
-    distances = pickle.load(open(distance_pickle_path, "rb"))
-    
-except Exception as e:
-    print(e)    
-    if metric == 'jaccard':
-        distances = dict(((loop1, loop2),
-                        popcount(data[loop1] & data[loop2]) / popcount(data[loop1] | data[loop2]))
-                        for nloop, loop1 in enumerate(metaloops, 1)
-                        for loop2 in metaloops[nloop:])
-    elif metric == 'overlap':
-        distances = dict(((loop1, loop2),   
-                        popcount(data[loop1] & data[loop2]) / min(popcount(data[loop1]), popcount(data[loop2])))
-                        for nloop, loop1 in enumerate(metaloops, 1)
-                        for loop2 in metaloops[nloop:])
-
-    pickle.dump(distances, open(distance_pickle_path, "wb"))
+if metric == 'jaccard':
+    distances = dict(((loop1, loop2),
+                    popcount(data[loop1] & data[loop2]) / popcount(data[loop1] | data[loop2]))
+                    for nloop, loop1 in enumerate(metaloops, 1)
+                    for loop2 in metaloops[nloop:])
+elif metric == 'overlap':
+    distances = dict(((loop1, loop2),   
+                    popcount(data[loop1] & data[loop2]) / min(popcount(data[loop1]), popcount(data[loop2])))
+                    for nloop, loop1 in enumerate(metaloops, 1)
+                    for loop2 in metaloops[nloop:])
 
 
-distance_matrix_pickle_path = os.path.join(result_path, f'pickles/{metric}_distance_matrix.pickle')
-
-try:
-    distance_matrix = pickle.load(open(distance_matrix_pickle_path, "rb"))
-    
-except Exception as e:
-    print(e)
-    
-    distance_matrix = np.asarray([[1.0 - distances.get((n1, n2), distances.get((n2, n1), 1.0))
+distance_matrix = np.asarray([[1.0 - distances.get((n1, n2), distances.get((n2, n1), 1.0))
                                 for n2 in metaloops] for n1 in metaloops])
-    pickle.dump(distance_matrix, open(distance_matrix_pickle_path, "wb"))
 
 ## Apply clustering
 D = np.asarray(distance_matrix)
 # reverse and min/max normalize
 D = (D - D.min()) / (D.max() - D.min())
+#IPython.embed()
 Y = sch.linkage(D, method='ward', metric='euclidean')
 
 fig = plt.figure(figsize=(48, 56))
