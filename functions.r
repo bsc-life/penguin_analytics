@@ -1,20 +1,3 @@
-#library(GenomicRanges)
-library(gridExtra, warn.conflicts = F, quietly = T)
-library(purrr, warn.conflicts = F, quietly = T)
-library("jsonlite", warn.conflicts = F, quietly = T)
-library("Hmisc", warn.conflicts = F, quietly = T)
-library("igraph", warn.conflicts = F, quietly = T)
-library(dplyr, warn.conflicts = F, quietly = T)
-library(tidyr, warn.conflicts = F, quietly = T)
-library(stringr, warn.conflicts = F, quietly = T)
-library(ggplot2, warn.conflicts = F, quietly = T)
-library(grid, warn.conflicts = F, quietly = T)
-library(ggpubr, warn.conflicts = F, quietly = T)
-library(purrr, warn.conflicts = F, quietly = T)
-library(scales, warn.conflicts = F, quietly = T)
-library(sqldf, warn.conflicts = F, quietly = T)
-library(data.table, warn.conflicts = F, quietly = T)
-
 
 find_network <- function(ppi_sp_local, e_dbp_local, p_dbp_local)
 {
