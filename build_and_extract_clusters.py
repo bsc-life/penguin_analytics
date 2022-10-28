@@ -76,11 +76,11 @@ paintor = "unfiltered_paintor"
 net_path = os.path.join(f'{cell_line}_EPINS', "tables" ,type_filtered , 'EP_graph_edges')
 print("net_path: ",net_path)
 
-result_path = os.path.join(f'{cell_line}_EPINS', "tables" ,type_filtered , "cluster_results")
+result_path = os.path.join(f'outputs_{cell_line}_EPINS', "tables" ,type_filtered , "cluster_results")
 if not os.path.exists(result_path):
     os.makedirs(result_path)
     os.makedirs(os.path.join(result_path, "pickles"))
-    
+
 print("result_path: ",result_path)
 
 ## clustering functions

@@ -5,3 +5,4 @@ venv
 ./graph_tables_cluster8.tar.gz
 *human_annotated_PPIs_IID.zip
 *human_annotated_PPIs_IID.txt
+*outputs_
