@@ -1,35 +1,35 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+
 
 import gc
 import os
-# In[79]:
+
 from ete3 import Tree, TreeStyle, CircleFace, faces, TextFace
-# In[80]:
+
 import pandas as pd
 import pyranges as pr
 from IPython.display import display
 import IPython
-# In[81]:
+
 import numpy as np
-# In[82]:
+
 from scipy.stats import fisher_exact
 from sklearn.metrics import v_measure_score, homogeneity_score, completeness_score
-# In[83]:
-# 20x faster bitwise counts
+
+
 from gmpy2 import popcount
-# In[84]:
+
 from matplotlib import pyplot as plt
 from matplotlib.colors import to_hex
 from pathlib import Path
 import pickle
 
-# clustering
+
 import scipy.cluster.hierarchy as sch
 from sklearn.metrics import calinski_harabasz_score, silhouette_score, davies_bouldin_score
-# In[2]:
+
 
 from itertools import product
 from collections import defaultdict
@@ -46,12 +46,13 @@ display(t.render('%%inline'))
 
 data_path = './src/EPIN_reconstruction_data'
 cell_line = "LNCaP"
+cell_type_data_path = os.path.join(data_path, cell_line)
 data_type = 'all-nodes' # *all-nodes* (or linker-nodes or bound-nodes)
 metric    = 'overlap' # overlap or jaccard
 
 
 
-tf_path = os.path.join(data_path, 'LNCaP/ChIP-seq/')
+#tf_path = os.path.join(data_path, 'LNCaP/ChIP-seq/')
 
 type_filtered="filtered"
 type_net = "Mega"
@@ -66,22 +67,9 @@ ctcf_bed_file = 'CTCF_lncap_ENCFF155SPQ.bed'
 ctcf_file = os.path.basename(ctcf_bed_file).replace(".bed", "")
 
 #######
-paintor = "both_in_EP"  # in case i want a diiferent run i put that run name here. here was for instance to do CTCF and GWAS on both EP
-#paintor = "filtered_paintor"
 paintor = "unfiltered_paintor"
 
 
-#####
-nodes_intermediate = 1 # this is no interediate netwroks
-#nodes_intermediate = 1 # how manuy nodes in between. with one intermediate
-#nodes_intermediate = 2 # how manuy nodes in between. this is the first
-
-if nodes_intermediate ==  2 :
-    n_i_f = ""    
-elif nodes_intermediate ==  1 :
-    n_i_f = "1inter_"
-elif nodes_intermediate ==  0 :
-    n_i_f = "0inter_"
 
 #####
 
@@ -89,8 +77,10 @@ net_path = os.path.join(f'{cell_line}_EPINS', "tables" ,type_filtered , 'EP_grap
 print("net_path: ",net_path)
 
 result_path = os.path.join(f'{cell_line}_EPINS', "tables" ,type_filtered , "cluster_results")
-
-
+if not os.path.exists(result_path):
+    os.makedirs(result_path)
+    os.makedirs(os.path.join(result_path, "pickles"))
+    
 print("result_path: ",result_path)
 
 ## clustering functions
@@ -340,9 +330,9 @@ def plot_corr_mat(D, Y, labels=None, fig=None, vmin=None, vmax=None, title='dist
 
 # add the features here to test for enrichments
 features = {}
-features["CTCF"] = {'path': os.path.join(tf_path, ctcf_bed_file), 'skip': 0}
-features['GWAS'] = {'path': os.path.join(data_path, 'GWAS/paintor_1causals.txt'), 'skip': 1}
-features['GWAS_Cat_prostate.carcinoma'] = {'path': os.path.join(data_path, 'GWAS_Catalog/GWAS_Cat_prostate.carcinoma'), 'skip': 1}
+features["CTCF"] = {'path': os.path.join(cell_type_data_path, ctcf_bed_file), 'skip': 0}
+features['GWAS'] = {'path': os.path.join(cell_type_data_path, 'paintor_1causals.txt'), 'skip': 1}
+features['GWAS_Cat_prostate.carcinoma'] = {'path': os.path.join(cell_type_data_path, 'GWAS_Cat_prostate.carcinoma'), 'skip': 1}
 #features['H3K27ac'] = {'path': os.path.join(data_path, 'LNCaP/HiChIP/broad_narrow.bed'), 'skip': 0}
 
 
@@ -413,7 +403,7 @@ try:
         foo = 0
         try:
             metaloop_features[feature] = pickle.load(open(pickle_path[0], "rb"))
-            print(feature, ": Exists")
+            print(feature, ": pickle Exists")
             foo +=1
         except:
             pass
@@ -468,13 +458,7 @@ try:
                         this_prot2 = f'ENHA_{p}'
                     if filter_pairs([prot1, prot2]):  # never go there when all-nodes
                         continue
-                    # this is not used anymore
-                    # if with_intermediates == "no" :
-                    #     if (prot1.startswith('ENHA_') or prot1.startswith('PROM_')) and (prot2.startswith('ENHA_') or prot2.startswith('PROM_')):
-                    #         #IPython.embed()
-                    #         update_pairs(pairs, [this_prot1, this_prot2])    
-                    # else:
-                    #     update_pairs(pairs, [this_prot1, this_prot2])
+                   
                     update_pairs(pairs, [this_prot1, this_prot2])
                 tmp = pr.PyRanges(chromosomes=chromosomes, starts=starts, ends=ends)
                 tmp = tmp.drop_duplicate_positions()
@@ -532,8 +516,6 @@ for metaloop in edges_by_metaloop:
     if len(edges_by_metaloop[metaloop]) > 0 :
         data[metaloop] = int(''.join(str(int(n in this_loop)) for n in all_edges[feature]), 2)
 
-print("Before distance pickles")
-#IPython.embed()
 
 metaloops = list(data.keys())
 
@@ -541,10 +523,9 @@ distance_pickle_path = os.path.join(result_path, f'pickles/{metric}_distances.pi
 
 try:
     distances = pickle.load(open(distance_pickle_path, "rb"))
-    print("Found distance pickle")
+    
 except Exception as e:
-    print(e)
-    print("NOT found distance pickle")
+    print(e)    
     if metric == 'jaccard':
         distances = dict(((loop1, loop2),
                         popcount(data[loop1] & data[loop2]) / popcount(data[loop1] | data[loop2]))
@@ -558,16 +539,15 @@ except Exception as e:
 
     pickle.dump(distances, open(distance_pickle_path, "wb"))
 
-## Create distance matrix [get distance of loops(n1, n2), if not available get the one of (n2,n1), otherwise distance = 1
 
 distance_matrix_pickle_path = os.path.join(result_path, f'pickles/{metric}_distance_matrix.pickle')
 
 try:
     distance_matrix = pickle.load(open(distance_matrix_pickle_path, "rb"))
-    print("Found distance_matrix pickle")
+    
 except Exception as e:
     print(e)
-    print("NOT found distance_matrix pickle")
+    
     distance_matrix = np.asarray([[1.0 - distances.get((n1, n2), distances.get((n2, n1), 1.0))
                                 for n2 in metaloops] for n1 in metaloops])
     pickle.dump(distance_matrix, open(distance_matrix_pickle_path, "wb"))
@@ -601,7 +581,6 @@ tree = sch.to_tree(Y)
 
 
 nw = getNewick(tree, "", tree.dist, labels)
-#tree_path = '{}_loops_{}_tables_{}_{}_{}-distance-tree_new.nw'.format(type_net, type_enha, type_filtered, data_type, metric)
 
 tree_path = os.path.join(result_path, f'{data_type}_{metric}-distance-tree_new.nw')
 
@@ -613,7 +592,6 @@ nw_file.close()
 
 
 tree_path = nw
-#tree_path = os.path.join(data_path, "FIMO2PPI" , '{}_loops_{}/tables/{}/CTCF/{}_{}-distance-tree.nw'.format(type_net, type_enha, type_filtered, data_type, metric))
 
 
 
@@ -787,14 +765,7 @@ check = 0
 for enum_splits , nummber_splits in enumerate([8]):
     tree = Tree(tree_path)
     #########################
-    ###############
-    # it should re root!!!!!!!!
-    if  nodes_intermediate == 1 or nodes_intermediate == 0:   
-        tree_root = tree.get_tree_root()
-        new_root = tree.get_children()[0].get_children()[0]
-        
-        tree.set_outgroup(new_root)
-    
+   
 
 
     tree.add_feature('dist_root', 0)
@@ -865,7 +836,7 @@ for enum_splits , nummber_splits in enumerate([8]):
             try:
                 OR, pv = fisher_exact([[nfeature, lnode_no_feature], [lnodes_out_cluster_feature, lnodes_out_cluster_no_feature]])
             except:
-                print("Fishertest problem")
+                
                 IPython.embed()
 
             #OR, pv = fisher_exact([[nfeature, lnode], [ct[feature], tt]])
@@ -879,11 +850,7 @@ for enum_splits , nummber_splits in enumerate([8]):
                 annotation[feature] = '-'
             else:
                 annotation[feature] = '='
-                
-    #     cluster.img_style["hz_line_color"] = colors[n-1]
-    #     cluster.img_style["vt_line_color"] = colors[n-1]
-
-
+ 
         out_table = out_table.strip() + "\n"
         clusters[cluster] = colors[n-1]
 
@@ -895,20 +862,7 @@ for enum_splits , nummber_splits in enumerate([8]):
         if check == 1:
             IPython.embed()
             check = 0
-        # for leaf in cluster.iter_leaf_names():
-
-        #     out_line = f'{leaf}\t{n}\t'
-            
-        #     for feature in features:
-        #         out_line += f'{annotation[feature]}\t{ORs[feature]}\t{pvs[feature]}\t'
-        #     out_line = out_line.strip() + "\n"
-        #     out_table += out_line
-
-        # out.write(''.join('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(leaf, n,
-        #                                                             ctcf, gwas,
-        #                                                             ORs['CTCF'], pvs['CTCF'],
-        #                                                             ORs['GWAS'], pvs['GWAS'])
-        #                 for leaf in cluster.iter_leaf_names()))
+      
     out.write(out_table)
     out.close()
 

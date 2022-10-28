@@ -3,3 +3,4 @@ venv
 .DS_Store
 .env
 ./graph_tables_cluster8.tar.gz
+./src/EPIN_reconstruction_data/human_annotated_PPIs_IID.zip
