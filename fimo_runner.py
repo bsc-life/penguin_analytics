@@ -11,7 +11,7 @@ import shutil
 ####################
 #### please make sure you have installed FIMO and included it your PATH
 #### To run:
-#### python fimo_runne.py sequences.fasta
+#### python fimo_runner.py sequences.fasta
 ####################
 dnaSeq = {}
 in_arg = sys.argv[1]

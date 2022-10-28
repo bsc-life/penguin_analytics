@@ -3,6 +3,17 @@ source("packages_installer.R")
 # helper functions
 source("functions.r")
 
+####################
+#### To run:
+#### Rscript reconstruct_epins.R \
+#### src/EPIN_reconstruction_data/LNCaP/E-P_loops_refined-regions.tsv \
+#### src/EPIN_reconstruction_data/LNCaP/fimo_promoters \
+#### src/EPIN_reconstruction_data/LNCaP/fimo_enhancers
+####################
+
+
+args <- commandArgs(trailingOnly = TRUE)
+
 
 ppi_filter = "filtered"
 ## ppi_filter: filtered , filtered Protein Proteins interactions to be LNCaP-specific and expressed in LNCaP cell line )
@@ -16,25 +27,15 @@ dir.create(file.path(output_folder, "tables"),  showWarnings = FALSE)
 dir.create(file.path(output_folder, "tables", ppi_filter),  showWarnings = FALSE)
 dir.create(file.path(output_folder, "tables", ppi_filter ,"EP_graph_edges"), showWarnings = FALSE)
 
+loop_file_path = args[1]
+promoters_fimo_file_path = args[2]
+enhancers_fimo_file_path = args[3]
 
 ## variables
 FPKM_threshold = 0.003 # both replicates to be above
 sliding_window = 100  # sliding window for filtering fimo
 FIMO_pvalue = 1e-4
 number_intermediate_nodes = 1
-
-
-#####
-gwas_genes <- as.data.frame(read.table(file.path(data_folder, "PrCa_GeneList_Used.csv"), sep = ",", header = T))
-
-gwas_promoters <-  as.data.frame(read.table(file.path(data_folder, "GWAS_promoters.txt"), sep = "\t", header = T, stringsAsFactors = F))
-
-SNPs <- as.data.frame(read.table( file.path(data_folder, "paintor_1causals.txt"), header = TRUE, stringsAsFactors = F)) %>%
-  select(-c(BP, A0, A1, Z, BETA, region, index_rsid, n, SE, N_CONTROLS, N_CASES, ID, Posterior_Prob, ch_pos,N)) %>%
-  rename(SNP_start = start, SNP_stop = stop)
-
-##### READ the list of DNA binding proteins
-motifs2gene <- as.data.frame(read.table(file.path(general_data_folder,  "JASPAR_motifs_2020_human.txt"), header = TRUE, sep = "\t", stringsAsFactors = F))
 
 ##### READ read counts 
 expression <- as.data.frame(read.table(file.path(data_folder, "Cuff_Gene_Counts.txt"), header = T)) %>%
@@ -73,7 +74,8 @@ promoters <- as.data.frame(read.table(file.path(data_folder, "genepos.txt"), sep
 
 
 ## READ the refined enhancer anchors
-loop_file = file.path(data_folder,  "E-P_loops_refined-regions.tsv")
+#loop_file = file.path(data_folder,  "E-P_loops_refined-regions.tsv")
+loop_file = loop_file_path
 loops <- as_tibble(read.table(loop_file, comment.char="", header = T,  sep = "\t", stringsAsFactors = F)) %>%
   mutate(enhancer_anchor_id = paste(chromosome.Enhancer.bin, start.Enhancer.bin, end.Enhancer.bin, sep = "_"),
          promoter_anchor_id = paste(chromosome.Promoter, start.Promoter, end.Promoter, sep = "_"),
@@ -107,7 +109,8 @@ make_graph_per_gene <- function(loop, number_intermediate_nodes)
   
   
   chromo_promo = str_replace(my_promoter$seqnames, "chr", "")
-  p_fimo_file <- file.path(data_folder, "fimo_promoters/")
+  #p_fimo_file <- file.path(data_folder, "fimo_promoters/")
+  p_fimo_file <- promoters_fimo_file_path
   p_fimo <- read_fimo(p_fimo_file, paste(chromo_promo,  my_promoter$start, my_promoter$end, sep = "_"), 0)
   
   ## add the chipseq_info of CTCF
@@ -142,7 +145,8 @@ make_graph_per_gene <- function(loop, number_intermediate_nodes)
   {
     print(paste("enhancer", enhancer))
     
-    e_fimo_file <- file.path(data_folder, "fimo_enhancers/")
+    #e_fimo_file <- file.path(data_folder, "fimo_enhancers/")
+    e_fimo_file <- enhancers_fimo_file_path
     e_fimo <- read_fimo(e_fimo_file, enhancer, 0)
     
     if(dim(e_fimo)[1] == 0){next}
