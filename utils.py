@@ -576,6 +576,7 @@ def single_promoter_graph(
         axe.get_yaxis().set_visible(False)
             
         buf = io.BytesIO() # in-memory files
+        #plt.savefig("outfile.pdf", format="pdf", dpi=300)
         plt.savefig(buf, format = "png", bbox_inches='tight') # save to the above file object
         plt.close()
         data = base64.b64encode(buf.getbuffer()).decode("utf8") # encode to html elements

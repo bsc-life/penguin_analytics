@@ -117,12 +117,14 @@ read_fimo <- function(fimo_dir , anchor, step )
            start = start +start_DNA,
            stop = stop + start_DNA)
   
+  #I filter to make the merge faster
+  paintor_gwas_tmp = paintor_gwas %>% filter(CHR == unique(my_df$chr_DNA) )
   
   my_df1 <- as.data.frame(sqldf("select * from my_df
-                                left join SNPs on
-                                SNPs.CHR == my_df.chr_DNA and
-                                SNPs.SNP_start >= my_df.start and
-                                SNPs.SNP_stop <= my_df.stop+ 1")) %>%
+                                left join paintor_gwas_tmp on
+                                paintor_gwas_tmp.CHR == my_df.chr_DNA and
+                                paintor_gwas_tmp.SNP_start >= my_df.start and
+                                paintor_gwas_tmp.SNP_stop <= my_df.stop+ 1")) %>%
     select(-c(CHR, SNP_stop, Pvalue)) %>%
     mutate(SNP_in_Motif = ifelse(!is.na(rsid),1,0))
   

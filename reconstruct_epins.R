@@ -41,6 +41,10 @@ number_intermediate_nodes = 1
 expression <- as.data.frame(read.table(file.path(data_folder, "Cuff_Gene_Counts.txt"), header = T)) %>%
   filter(LNCaP_1 > FPKM_threshold & LNCaP_2 > FPKM_threshold)
 
+#### READ SNPS
+paintor_gwas_SNPs <- as.data.frame(read.table( file.path(data_folder, "paintor_1causals.txt"), header = TRUE, stringsAsFactors = F)) %>%
+  select(-c(BP, A0, A1, Z, BETA, region, index_rsid, n, SE, N_CONTROLS, N_CASES, ID, Posterior_Prob, ch_pos,N)) %>%
+  rename(SNP_start = start, SNP_stop = stop)
 
 #### READ PPIs. Downloaded PPIS from IID database
 ppi_list <- as.data.frame(read.delim(file.path(general_data_folder, "human_annotated_PPIs_IID.txt"),  header = TRUE, stringsAsFactors = F)) %>% 
@@ -98,7 +102,7 @@ make_graph_per_gene <- function(loop, number_intermediate_nodes)
   ppi_sp <- c()
   p_dbp <- data.frame()
   e_dbp <- data.frame()
-  
+  anchor_binding_sites_wSNPs <- data.frame()
   
   my_enhancers <- loop %>% filter(gene.name == my_gene)
   if(dim(my_enhancers)[1] == 0){return(data.frame())}
@@ -111,7 +115,8 @@ make_graph_per_gene <- function(loop, number_intermediate_nodes)
   chromo_promo = str_replace(my_promoter$seqnames, "chr", "")
   #p_fimo_file <- file.path(data_folder, "fimo_promoters/")
   p_fimo_file <- promoters_fimo_file_path
-  p_fimo <- read_fimo(p_fimo_file, paste(chromo_promo,  my_promoter$start, my_promoter$end, sep = "_"), 0)
+  promoter = paste(chromo_promo,  my_promoter$start, my_promoter$end, sep = "_")
+  p_fimo <- read_fimo(p_fimo_file, promoter, 0)
   
   ## add the chipseq_info of CTCF
   add_ctcf_chipseq_info <- function(fimo , chr , start, end)
@@ -137,6 +142,13 @@ make_graph_per_gene <- function(loop, number_intermediate_nodes)
   
   if(dim(p_fimo)[1] == 0){return(data.frame())}
   
+  #keep the binding sites in P that cary SNPs..
+  anchor_binding_sites_wSNPs <- rbindlist(list(anchor_binding_sites_wSNPs,
+                                               p_fimo  %>%
+                                                 filter(!is.na(rsid)) %>%
+                                                 mutate(anchor = promoter,
+                                                        type = "PROM") %>%
+                                                 select(anchor, motif_alt_id, rsid)))
   
   
   ##### ENHANCER(S)
@@ -150,6 +162,18 @@ make_graph_per_gene <- function(loop, number_intermediate_nodes)
     e_fimo <- read_fimo(e_fimo_file, enhancer, 0)
     
     if(dim(e_fimo)[1] == 0){next}
+    
+    #keep the binding sites in E that cary SNPs..
+    anchor_binding_sites_wSNPs <- rbindlist(list(anchor_binding_sites_wSNPs,
+                                                 e_fimo  %>%
+                                                   filter(!is.na(rsid)) %>%
+                                                   mutate(anchor = enhancer,
+                                                          type = "ENHA") %>%
+                                                   select(anchor, motif_alt_id, rsid)))
+                                                   
+                                          
+    
+    
     
     e_fimo <- add_ctcf_chipseq_info(e_fimo, str_split(enhancer, "_")[[1]][1], str_split(enhancer, "_")[[1]][2], str_split(enhancer, "_")[[1]][3])
     
@@ -170,6 +194,9 @@ make_graph_per_gene <- function(loop, number_intermediate_nodes)
     }
   }
 
+  
+  anchor_binding_sites_wSNPs = data.frame(anchor_binding_sites_wSNPs)
+  
   if(dim(e_dbp)[1] == 0){return(data.frame())}
   
   #### Delete an intermediate if it is just connecting two DBPs of the same anchor
@@ -201,20 +228,29 @@ make_graph_per_gene <- function(loop, number_intermediate_nodes)
     select(3,4) %>%
     write.table(file.path(output_folder,  "tables", ppi_filter, "EP_graph_edges", paste(my_gene, "txt", sep = ".")), quote = F, row.names = F, sep = "\t", col.names = F)
   
-  
+  return(anchor_binding_sites_wSNPs)
   print(proc.time() - ptm)
   
 }
 
 
+all_anchors_binding_sites_wSNPs = data.frame()
+#for(gene in unique(loops$promoter_gene))
+for(gene in c("MYC"))
+{
+  print(gene)
+  loop <- loops %>% filter(promoter_gene == gene)
+  all_anchors_binding_sites_wSNPs = rbindlist(list(all_anchors_binding_sites_wSNPs, 
+                                                    make_graph_per_gene(loop, number_intermediate_nodes)))
+}
 
-# for(gene in unique(loops$promoter_gene))
-# {
-#   print(gene)
-#   loop <- loops %>% filter(promoter_gene == gene)
-#   make_graph_per_gene(loop, number_intermediate_nodes)
-# }
-loop <- loops %>% filter(promoter_gene == "MYC")
-make_graph_per_gene(loop, number_intermediate_nodes)
+data.frame(all_anchors_binding_sites_wSNPs ) %>% 
+  filter(type == "ENHA") %>%
+  write.table(file.path(output_folder, "tables", ppi_filter, "binding_sites_snp_enha.txt"), quote = F, row.names = F, sep = "\t")
+
+data.frame(all_anchors_binding_sites_wSNPs ) %>% 
+  filter(type == "PROM") %>%
+  write.table(file.path(output_folder, "tables", ppi_filter, "binding_sites_snp_prom.txt"), quote = F, row.names = F, sep = "\t")
+
 
 

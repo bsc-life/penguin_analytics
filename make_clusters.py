@@ -38,7 +38,7 @@ t = Tree( "((a,b),c);" )
 circular_style = TreeStyle()
 circular_style.mode = "c" # draw tree in circular mode
 circular_style.scale = 20
-display(t.render('%%inline'))
+#display(t.render('%%inline'))
 
 
 
