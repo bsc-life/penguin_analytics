@@ -358,7 +358,7 @@ def single_promoter_graph(
             if SNP_BindingSite_path:
     #            print(sub_nodes.head(2))
                 sub_nodes["protein_SNP"] = np.where(
-                    sub_nodes["SNP-binding"] != False,  sub_nodes["protein_display_name"].map(str) + "-\n" + sub_nodes["SNP-binding"].map(str)  , sub_nodes["protein_display_name"] ) 
+                    sub_nodes["SNP-binding"] != "False",  sub_nodes["protein_display_name"].map(str) + "-\n" + sub_nodes["SNP-binding"].map(str)  , sub_nodes["protein_display_name"] ) 
 
                 wanted_enhancers = sub_nodes[['protein_SNP', 'X-graph-coord', 'Y-graph-coord','in_22']].to_numpy()
                 #print(sub_nodes[sub_nodes["SNP-binding"] != "False"])
